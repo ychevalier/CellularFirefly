@@ -1,4 +1,4 @@
-package com.bham.naturalcomp.cellularfirefly.interfaces;
+package com.bham.naturalcomp.cellularfirefly.listener;
 
 public interface FireflyDisplay {
 	

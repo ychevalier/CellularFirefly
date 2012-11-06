@@ -2,38 +2,30 @@ package com.bham.naturalcomp.cellularfirefly.model;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import com.bham.naturalcomp.cellularfirefly.interfaces.FireflyDisplay;
+import com.bham.naturalcomp.cellularfirefly.listener.FireflyDisplay;
+import com.bham.naturalcomp.cellularfirefly.listener.FlashCounter;
 
 public class Firefly {
 	
 	public static final int NUMBER_OF_PERIODS = 10;
-	// In Milliseconds.
-	public static final int DURATION_OF_PERIODS = 100;
 	
 	public static final int STATE_INIT = 0;
 	public static final int STATE_TRANSITION_CHARGING_NONSENSITIVE = 7;
 	public static final int STATE_FLASH = 9;
 	
-	/**
-	 * Timer needs to be static,
-	 * it is better and mandatory if you want a lot of fireflies.
-	 * This design is more far from nature when every firefly has their own timer...
-	 */
-	private static Timer Timer;
-	
 	private ArrayList<Firefly> mNeighbours;
-	private int mNextState;
-	private FireflyTask mTask;
+	private int mCurrentState;
+	private boolean mNeedReset;
+
 	private FireflyDisplay mDisplay;
+	private FlashCounter mCounter;
 	
 	public Firefly() {
 		mNeighbours = new ArrayList<Firefly>();
-		if(Timer == null) {
-			Timer = new Timer();
-		}
+		Random gen = new Random();
+		mCurrentState = Math.abs(gen.nextInt()) % NUMBER_OF_PERIODS;
+		mNeedReset = false;
 	}
 	
 	public void addNeighbour(Firefly f) {
@@ -44,38 +36,26 @@ public class Firefly {
 		mDisplay = display;
 	}
 	
-	public void launchFirefly() {
-		killFirefly();
-		mTask = new FireflyTask();
-		//mCurrentState = STATE_INIT;
-		Random gen = new Random();
-		mNextState = Math.abs(gen.nextInt()) % NUMBER_OF_PERIODS;
-		Timer.scheduleAtFixedRate(mTask, 0, DURATION_OF_PERIODS);
+	public void setCounter(FlashCounter counter) {
+		mCounter = counter;
 	}
 	
-	public void killFirefly() {
-		if(mTask != null) {
-			mTask.cancel();
+	public void nextStep() {
+		mCurrentState = mNeedReset ? STATE_INIT : (mCurrentState + 1) % NUMBER_OF_PERIODS;
+		mNeedReset = false;
+	}
+	
+	public void act() {
+		if(mCurrentState == STATE_FLASH) {
+			flash();
 		}
-	}
-	
-	private class FireflyTask extends TimerTask {
-		@Override
-		public void run() { 
-			if(mNextState == STATE_FLASH) {
-				flash();
-			}
-			// Little hack for synchro
-			else if(mNextState == STATE_INIT)
-			{
-				stopFlashing();
-			}
-
-			if(mDisplay != null) {
-				mDisplay.updateState(mNextState);
-			}
-			
-			mNextState = (mNextState + 1) % NUMBER_OF_PERIODS;
+		// Little hack for synchro
+		else if(mCurrentState == STATE_INIT) {
+			stopFlashing();
+		}
+		
+		if(mDisplay != null) {
+			mDisplay.updateState(mCurrentState);
 		}
 	}
 	
@@ -84,10 +64,12 @@ public class Firefly {
 		if(mDisplay != null) {
 			mDisplay.displayFlash();
 		}
+		if(mCounter != null) {
+			mCounter.reportFlash();
+		}
 		
 		// Prevent Neighbours
 		for (Firefly f : mNeighbours) {
-			// Maybe give my id...
 			if(f != null) {
 				f.neighbourHasFlashed();
 			}
@@ -100,13 +82,11 @@ public class Firefly {
 			mDisplay.stopFlash();
 		}
 	}
-	
-	// Do I need synchronized???
-	protected synchronized void neighbourHasFlashed() {
-		int currentState = mNextState == 0 ? 9 : mNextState - 1;
-		if(currentState >= STATE_INIT 
-				&& currentState < STATE_TRANSITION_CHARGING_NONSENSITIVE) {
-			mNextState = STATE_INIT;
+
+	protected void neighbourHasFlashed() {
+		if(mCurrentState >= STATE_INIT 
+				&& mCurrentState < STATE_TRANSITION_CHARGING_NONSENSITIVE) {
+			mNeedReset = true;
 		}
 	}
 

@@ -7,7 +7,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import com.bham.naturalcomp.cellularfirefly.interfaces.FireflyDisplay;
+import com.bham.naturalcomp.cellularfirefly.listener.FireflyDisplay;
 import com.bham.naturalcomp.cellularfirefly.model.Firefly;
 
 public class FireflyView extends JPanel implements FireflyDisplay {
@@ -20,11 +20,9 @@ public class FireflyView extends JPanel implements FireflyDisplay {
 	// Nice Blue
 	private static final Color COLOR_FLASH = new Color(44, 182, 209);
 	
-	private Firefly mFirefly;
-	
 	private JLabel mLabel;
 
-	public FireflyView() {
+	public FireflyView(Firefly f) {
 		
 		// UI
 		setBackground(COLOR_DEFAULT);
@@ -34,13 +32,7 @@ public class FireflyView extends JPanel implements FireflyDisplay {
 		add(mLabel);
 		
 		// Core
-		mFirefly = new Firefly();
-		mFirefly.setDisplay(this);
-		mFirefly.launchFirefly();
-	}
-	
-	public void addNeighbour(FireflyView f) {
-		mFirefly.addNeighbour(f.mFirefly);
+		f.setDisplay(this);
 	}
 
 	@Override
@@ -52,10 +44,10 @@ public class FireflyView extends JPanel implements FireflyDisplay {
 	public void stopFlash() {
 		setBackground(COLOR_DEFAULT);
 	}
-
+	
 	@Override
 	public void updateState(int state) {
-		mLabel.setText(String.valueOf(state));
+		//mLabel.setText(String.valueOf(state));
 	}
 
 }
