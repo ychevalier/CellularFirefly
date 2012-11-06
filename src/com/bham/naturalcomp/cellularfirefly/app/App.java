@@ -25,7 +25,7 @@ public class App implements FlashCounter {
 	private class SwarmUpdateTask extends TimerTask {
 		@Override
 		public void run() {
-			System.out.println("At tick " + nbTick + " : " + nbFlashAtTick);
+			System.out.println("At tick " + nbTick + " : " + (float)nbFlashAtTick/((float)NUMBER_OF_COLUMNS * (float)NUMBER_OF_ROWS) * 100 + "%");
 			nbTick++;
 			nbFlashAtTick = 0;
 			// Display Things that are necessary
