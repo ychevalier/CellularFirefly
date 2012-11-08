@@ -30,6 +30,14 @@ public class Config {
 	
 	public static final int NUM_SIMULATIONS = 10;
 	
+	// If you want to have the output written
+	// in a file instead of console output (better if multiple simulations...)
+	// THe ouptput is always CSV style.
+	// Not final in case you mess up with the name, or can't write on the file...
+	public static boolean WRITE_IN_FILE = true;
+	// the CSV extension will be added automatically.
+	public static final String FILE_PATH = "Simu";
+	
 	
 
 }

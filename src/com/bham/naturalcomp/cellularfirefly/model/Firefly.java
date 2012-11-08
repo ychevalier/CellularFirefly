@@ -16,9 +16,6 @@ public class Firefly {
 	private static final int STATE_TRANSITION_CHARGING_NONSENSITIVE = 7;
 	private static final int STATE_FLASH = 9;
 	
-	// Probability that a firefly reset after a neighbour flashes.
-	private static final int SENSIBILITY = Config.SENSIBILITY;
-	
 	private ArrayList<Firefly> mNeighbours;
 	private int mCurrentState;
 	private boolean mNeedReset;
@@ -93,7 +90,7 @@ public class Firefly {
 	protected void neighbourHasFlashed() {
 		if(mCurrentState >= STATE_INIT 
 				&& mCurrentState < STATE_TRANSITION_CHARGING_NONSENSITIVE) {
-			if((Math.abs(mGenerator.nextInt()) % 100) < SENSIBILITY) {
+			if((Math.abs(mGenerator.nextInt()) % 100) < Config.SENSIBILITY) {
 				mNeedReset = true;
 			}
 			
