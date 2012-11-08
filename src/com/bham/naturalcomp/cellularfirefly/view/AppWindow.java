@@ -8,7 +8,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import com.bham.naturalcomp.cellularfirefly.app.App;
+import com.bham.naturalcomp.cellularfirefly.app.Config;
 import com.bham.naturalcomp.cellularfirefly.model.Firefly;
 
 public class AppWindow extends JFrame {
@@ -17,7 +17,7 @@ public class AppWindow extends JFrame {
 
 	public AppWindow(Firefly[][] swarm) {
 		
-		setTitle("Firefly Coordination " + App.NUMBER_OF_COLUMNS + " x " + App.NUMBER_OF_ROWS);
+		setTitle("Firefly Coordination " + Config.NUMBER_OF_COLUMNS + " x " + Config.NUMBER_OF_ROWS);
 		addWindowListener(new WindowAdapter()
 	      {
 			public void windowClosing(WindowEvent e)
@@ -28,16 +28,16 @@ public class AppWindow extends JFrame {
 	      });
 		
 		JPanel pan = new JPanel();
-		GridLayout layout = new GridLayout(App.NUMBER_OF_ROWS, App.NUMBER_OF_COLUMNS);
+		GridLayout layout = new GridLayout(Config.NUMBER_OF_ROWS, Config.NUMBER_OF_COLUMNS);
 		pan.setLayout(layout);
 		add(pan);
-		for(int i = 0; i < App.NUMBER_OF_COLUMNS; i++) {
-			for (int j = 0; j < App.NUMBER_OF_ROWS; j++) {
+		for(int i = 0; i < Config.NUMBER_OF_COLUMNS; i++) {
+			for (int j = 0; j < Config.NUMBER_OF_ROWS; j++) {
 				pan.add(new FireflyView(swarm[i][j]));
 			}
 		}
 		
-		final Dimension panSize = new Dimension(App.NUMBER_OF_COLUMNS*10, App.NUMBER_OF_ROWS*10);
+		final Dimension panSize = new Dimension(Config.NUMBER_OF_COLUMNS*10, Config.NUMBER_OF_ROWS*10);
 		pan.setMinimumSize(panSize);
 		pan.setMaximumSize(panSize);
 		pan.setPreferredSize(panSize);

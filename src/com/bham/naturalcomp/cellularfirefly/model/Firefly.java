@@ -1,30 +1,41 @@
 package com.bham.naturalcomp.cellularfirefly.model;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Random;
 
+import com.bham.naturalcomp.cellularfirefly.app.Config;
 import com.bham.naturalcomp.cellularfirefly.listener.FireflyDisplay;
 import com.bham.naturalcomp.cellularfirefly.listener.FlashCounter;
 
 public class Firefly {
 	
-	public static final int NUMBER_OF_PERIODS = 10;
+	private static final int NUMBER_OF_PERIODS = 10;
 	
-	public static final int STATE_INIT = 0;
-	public static final int STATE_TRANSITION_CHARGING_NONSENSITIVE = 7;
-	public static final int STATE_FLASH = 9;
+	private static final int STATE_INIT = 0;
+	private static final int STATE_TRANSITION_CHARGING_NONSENSITIVE = 7;
+	private static final int STATE_FLASH = 9;
+	
+	// Probability that a firefly reset after a neighbour flashes.
+	private static final int SENSIBILITY = Config.SENSIBILITY;
 	
 	private ArrayList<Firefly> mNeighbours;
 	private int mCurrentState;
 	private boolean mNeedReset;
+	private Random mGenerator;
 
-	private FireflyDisplay mDisplay;
-	private FlashCounter mCounter;
+	private WeakReference<FireflyDisplay> mDisplay;
+	private WeakReference<FlashCounter> mCounter;
 	
 	public Firefly() {
 		mNeighbours = new ArrayList<Firefly>();
-		Random gen = new Random();
-		mCurrentState = Math.abs(gen.nextInt()) % NUMBER_OF_PERIODS;
+		mGenerator = new Random();
+		mCurrentState = Math.abs(mGenerator.nextInt()) % NUMBER_OF_PERIODS;
+		mNeedReset = false;
+	}
+	
+	public void reset() {
+		mCurrentState = Math.abs(mGenerator.nextInt()) % NUMBER_OF_PERIODS;
 		mNeedReset = false;
 	}
 	
@@ -33,11 +44,11 @@ public class Firefly {
 	}
 	
 	public void setDisplay(FireflyDisplay display) {
-		mDisplay = display;
+		mDisplay = new WeakReference<FireflyDisplay>(display);
 	}
 	
 	public void setCounter(FlashCounter counter) {
-		mCounter = counter;
+		mCounter = new WeakReference<FlashCounter>(counter);
 	}
 	
 	public void nextStep() {
@@ -53,19 +64,15 @@ public class Firefly {
 		else if(mCurrentState == STATE_INIT) {
 			stopFlashing();
 		}
-		
-		if(mDisplay != null) {
-			mDisplay.updateState(mCurrentState);
-		}
 	}
 	
 	protected void flash() {
 		
-		if(mDisplay != null) {
-			mDisplay.displayFlash();
+		if(mDisplay != null && mDisplay.get() != null) {
+			mDisplay.get().displayFlash();
 		}
-		if(mCounter != null) {
-			mCounter.reportFlash();
+		if(mCounter != null && mCounter.get() != null) {
+			mCounter.get().reportFlash();
 		}
 		
 		// Prevent Neighbours
@@ -78,15 +85,18 @@ public class Firefly {
 	}
 	
 	protected void stopFlashing() {
-		if(mDisplay != null) {
-			mDisplay.stopFlash();
+		if(mDisplay != null && mDisplay.get() != null) {
+			mDisplay.get().stopFlash();
 		}
 	}
 
 	protected void neighbourHasFlashed() {
 		if(mCurrentState >= STATE_INIT 
 				&& mCurrentState < STATE_TRANSITION_CHARGING_NONSENSITIVE) {
-			mNeedReset = true;
+			if((Math.abs(mGenerator.nextInt()) % 100) < SENSIBILITY) {
+				mNeedReset = true;
+			}
+			
 		}
 	}
 

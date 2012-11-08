@@ -44,10 +44,5 @@ public class FireflyView extends JPanel implements FireflyDisplay {
 	public void stopFlash() {
 		setBackground(COLOR_DEFAULT);
 	}
-	
-	@Override
-	public void updateState(int state) {
-		//mLabel.setText(String.valueOf(state));
-	}
 
 }
