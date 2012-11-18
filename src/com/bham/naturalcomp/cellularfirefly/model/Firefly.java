@@ -4,7 +4,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Random;
 
-import com.bham.naturalcomp.cellularfirefly.app.Config;
+import com.bham.naturalcomp.cellularfirefly.app.App;
 import com.bham.naturalcomp.cellularfirefly.listener.FireflyDisplay;
 import com.bham.naturalcomp.cellularfirefly.listener.FlashCounter;
 
@@ -90,7 +90,7 @@ public class Firefly {
 	protected void neighbourHasFlashed() {
 		if(mCurrentState >= STATE_INIT 
 				&& mCurrentState < STATE_TRANSITION_CHARGING_NONSENSITIVE) {
-			if((Math.abs(mGenerator.nextInt()) % 100) < Config.SENSIBILITY) {
+			if((Math.abs(mGenerator.nextInt()) % 100) < App.CURRENT_SENSIBILITY) {
 				mNeedReset = true;
 			}
 			

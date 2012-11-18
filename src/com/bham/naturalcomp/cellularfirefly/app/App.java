@@ -3,7 +3,6 @@ package com.bham.naturalcomp.cellularfirefly.app;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.bham.naturalcomp.cellularfirefly.io.FileHelper;
 import com.bham.naturalcomp.cellularfirefly.listener.FlashCounter;
 import com.bham.naturalcomp.cellularfirefly.model.Firefly;
 import com.bham.naturalcomp.cellularfirefly.view.AppWindow;
@@ -26,37 +25,27 @@ public class App implements FlashCounter {
 	private Firefly[][] mSwarm;
 	private Timer mTimer;
 	
+	private long[] mSimuEnd;
+	
+	public static int CURRENT_SENSIBILITY;
+	
 	private class SwarmUpdateTask extends TimerTask {
 		@Override
 		public void run() {
 			// Run the simulation until the boolean says its over.
 			// Then cancel it...
 			if(simulation()) {
-				if(Config.WRITE_IN_FILE) {
-					FileHelper.closeCurrentFile();
-				}
 				cancel();
 			}
 		}
 	}
 	
 	private boolean simulation() {
-		float percentageFlash = (float)mNbFlashAtTick/((float)Config.NUMBER_OF_COLUMNS * (float)Config.NUMBER_OF_ROWS) * 100;
+		//float percentageFlash = (float)mNbFlashAtTick/((float)Config.NUMBER_OF_COLUMNS * (float)Config.NUMBER_OF_ROWS) * 100;
 		
-		if(Config.WRITE_IN_FILE) {
-			FileHelper.writeNextLine(mNbTick + ", " + percentageFlash + "%");
-		} else if(!Config.REMOVE_ZEROS || mNbFlashAtTick > 0) {
-			System.out.println(mNbTick + ", " + percentageFlash + "%");
-		}
-		
-		if(percentageFlash >= Config.STOP_CRITERION) {
-			mCurrentTimesCriterion++;
-		} else if(percentageFlash > 0) {
-			// Obviously, it has to be consecutive except when the percentage is 0.0 (non flashing)
-			mCurrentTimesCriterion = 0;
-		}
-		
-		if(mCurrentTimesCriterion >= Config.NUM_TIMES_CRITERION) {
+		if(mNbFlashAtTick == Config.NUMBER_OF_ROWS*Config.NUMBER_OF_COLUMNS) {
+			return SIMU_IS_OVER;
+		} else if(mNbTick >= Config.UNFINISHED && Config.UNFINISHED != 0) {
 			return SIMU_IS_OVER;
 		}
 		
@@ -97,6 +86,7 @@ public class App implements FlashCounter {
 	protected App() {
 		resetSimu();
 		mSwarm = new Firefly[Config.NUMBER_OF_COLUMNS][Config.NUMBER_OF_ROWS];
+		mSimuEnd = new long[Config.NUM_SIMULATIONS];
 		for(int i = 0; i < Config.NUMBER_OF_COLUMNS; i++) {
 			for (int j = 0; j < Config.NUMBER_OF_ROWS; j++) {
 				mSwarm[i][j] = new Firefly();
@@ -156,46 +146,59 @@ public class App implements FlashCounter {
 	
 	private void launchSimu() {
 		
-		
-		
-		
 		if(Config.BATCH_MODE) {
-			
-			// Launch NUM_SIMULATION number of simulation.
-			for (int i = 0; i < Config.NUM_SIMULATIONS; i++) {
-				if(!Config.WRITE_IN_FILE) {
-					System.out.println("Simulation " + i);
-					System.out.println("Tick, % of Sync");
-				} else {
-					if(Config.FILE_PATH != null && !Config.FILE_PATH.equals("")) {
-						Config.WRITE_IN_FILE = FileHelper.createFile(Config.FILE_PATH + "_" + i + ".csv");
+			System.out.println("Num of runs, Sensibility, AVG ticks, Std Dev, failures, max");
+			for (int k = Config.SENSIBILITY_MAX; k >= Config.SENSIBILITY_MAX; k-=Config.SENSIBILITY_STEP) {
+				CURRENT_SENSIBILITY = k;
+				// Launch NUM_SIMULATION number of simulation.
+				long max = 0;
+				for (int i = 0; i < Config.NUM_SIMULATIONS; i++) {
+					//System.out.println("Simulation n¡" + i);
+					// Run One Time Simu.
+					while(!simulation());
+					mSimuEnd[i] = mNbTick;
+					if(max < mNbTick && mNbTick != Config.UNFINISHED && Config.UNFINISHED != 0)
+						max = mNbTick;
+					// Reset.
+					resetSimu();
+					resetSwarm();
+				}
+				
+				double average = 0;
+				long nbUnFinished = 0;
+				for (int j = 0; j < mSimuEnd.length; j++) {
+					if(mSimuEnd[j] >= Config.UNFINISHED && Config.UNFINISHED != 0) {
+						nbUnFinished++;
 					} else {
-						Config.WRITE_IN_FILE = FileHelper.createFile("Simulation_" + i + ".csv");
+						average += mSimuEnd[j];
 					}
-					FileHelper.writeNextLine("Tick, % of Sync");
 				}
-				// Run One TIme Simu.
-				while(!simulation());
-				// Reset.
-				resetSimu();
-				resetSwarm();
-				if(Config.WRITE_IN_FILE) {
-					FileHelper.closeCurrentFile();
-				}
-			}
 
+				average /= mSimuEnd.length - nbUnFinished;
+				
+				double stdDev = 0;
+				for (int i = 0; i < mSimuEnd.length; i++) {
+					if(mSimuEnd[i] < Config.UNFINISHED && Config.UNFINISHED != 0) {
+						stdDev += Math.pow(mSimuEnd[i] - average, 2);
+					}
+					
+				}
+				stdDev /= mSimuEnd.length-nbUnFinished;
+				stdDev = Math.sqrt(stdDev);
+				
+				// Some tests output
+				/*
+				System.out.println("############## Global Results ################");
+				System.out.println("Sensibility : " + Config.SENSIBILITY + ", Number of runs : " + Config.NUM_SIMULATIONS);
+				System.out.println("Fail: " + nbUnFinished + ", Max : " + max);
+				System.out.println("Average : " + average + ", Standard Deviation : " + stdDev);
+				*/
+				// Uncomment this if you are in the loop.
+				System.out.println(Config.NUM_SIMULATIONS + ", " + k + ", " + average + ", " + stdDev + "," + nbUnFinished + "," + max );
+				nbUnFinished = 0;
+			}
 		} else {
 			/*final AppWindow window = */new AppWindow(mSwarm);
-			if(!Config.WRITE_IN_FILE) {
-				System.out.println("Tick, % of Sync");
-			} else {
-				if(Config.FILE_PATH != null && !Config.FILE_PATH.equals("")) {
-					Config.WRITE_IN_FILE = FileHelper.createFile(Config.FILE_PATH);
-				} else {
-					Config.WRITE_IN_FILE = FileHelper.createFile("Simulation");
-				}
-				FileHelper.writeNextLine("Tick, % of Sync");
-			}
 			mTimer = new Timer();
 			mTask = new SwarmUpdateTask();
 			mTimer.scheduleAtFixedRate(mTask, 0, Config.CYCLE_PERIOD);
